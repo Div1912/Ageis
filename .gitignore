@@ -1,0 +1,45 @@
+# Node / npm
+node_modules/
+dist/
+.cache/
+
+# Vite
+*.local
+dist-ssr/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Agent runtime data (live-generated)
+agent_decisions.json
+backend/agent_decisions.json
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Python / AlgoKit
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+*.pyc
+.venv/
+venv/
+.algokit/
+
+# Compiled artifacts (check these in if you want them tracked)
+contracts/artifacts/
+
+# OS
+.DS_Store
+Thumbs.db

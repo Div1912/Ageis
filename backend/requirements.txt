@@ -1,0 +1,6 @@
+fastapi==0.115.0
+uvicorn
+py-algorand-sdk
+pydantic==2.10.0
+httpx==0.28.0
+python-dotenv==1.0.1

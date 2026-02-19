@@ -1,0 +1,10 @@
+[algokit]
+min_version = "2.0.0"
+
+[project]
+type = "workspace"
+name = "aegis"
+
+[project.run]
+build = { commands = ["algokit compile py contracts/aegis_position.py"], description = "Compile smart contract" }
+deploy-testnet = { commands = ["python contracts/deploy.py"], description = "Deploy to Algorand Testnet" }

@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "aegis-contracts"
+version = "1.0.0"
+description = "AEGIS smart contracts — Algorand LP Position Manager"
+authors = []
+
+[tool.poetry.dependencies]
+python = "^3.12"
+algokit-utils = "^2.0.0"
+algorand-python = "^2.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.algokit.generate]
+client = { path = "contracts/artifacts", generator = "algopy" }
