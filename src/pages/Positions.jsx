@@ -13,7 +13,7 @@ import RemoveLiquidityModal from '../components/RemoveLiquidityModal'
 import { useLivePrice } from '../hooks/useLivePrice'
 import { usePosition } from '../hooks/usePosition'
 import { formatUSD, computeFeesEarned, computeILDollar } from '../services/pnlCalculator'
-import { getClosedPositions, archiveCurrentPosition, trackNewPosition } from '../services/positionStore'
+import { getClosedPositions } from '../services/positionStore'
 import { getPositions } from '../services/supabaseService'
 
 const STATUS_BADGE = {
@@ -150,7 +150,6 @@ export default function Positions({ wallet }) {
     const { currentPrice } = useLivePrice()
     const position = usePosition(wallet?.address)  // wallet-scoped
 
-    const [showCreateModal, setShowCreateModal] = useState(false)
     const [showAddModal, setShowAddModal] = useState(false)
     const [showRemoveModal, setShowRemoveModal] = useState(false)
 
@@ -215,23 +214,6 @@ export default function Positions({ wallet }) {
         const netPnl = totalFees - totalIl - rebalanceCost
         return { totalCap, totalFees, totalIl, netPnl }
     }, [allPositions, currentPrice])
-
-    // Handlers for New Position success
-    const handleCreateSuccess = useCallback(({ entry, lower, upper, capital, positionData }) => {
-        // Archive current on-chain position if one exists
-        if (position.entryPrice > 0) {
-            archiveCurrentPosition(position)
-        }
-        // Track the new position in localStorage
-        trackNewPosition({ entryPrice: entry, lowerBound: lower, upperBound: upper, capitalUsdc: capital })
-
-        // Force-update position immediately so UI shows it now (don't wait for 30s refresh)
-        if (positionData && position.forceUpdate) {
-            position.forceUpdate(positionData)
-        } else {
-            position.refresh()
-        }
-    }, [position])
 
     const handleAddSuccess = useCallback(() => { position.refresh() }, [position])
     const handleRemoveSuccess = useCallback(() => { position.refresh() }, [position])
@@ -333,12 +315,6 @@ export default function Positions({ wallet }) {
             </div>
 
             {/* Modals */}
-            <CreatePositionModal
-                isOpen={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
-                wallet={wallet}
-                onSuccess={handleCreateSuccess}
-            />
             <AddLiquidityModal
                 isOpen={showAddModal}
                 onClose={() => setShowAddModal(false)}
