@@ -9,7 +9,10 @@ import { useLivePrice } from '../hooks/useLivePrice'
 import { setPosition } from '../services/contractService'
 import { savePosition } from '../services/supabaseService'
 
-const APP_ID = parseInt(import.meta.env.VITE_APP_ID || '755777633')
+const APP_ID = parseInt(import.meta.env.VITE_APP_ID || '755790984')
+// Creator address — only this wallet calls set_position on-chain
+// Other wallets just save to Supabase (no on-chain tx needed for pool participants)
+const CREATOR_ADDRESS = import.meta.env.VITE_CREATOR_ADDRESS || null
 
 export default function CreatePositionModal({ isOpen, onClose, wallet, onSuccess }) {
     const { currentPrice } = useLivePrice()
@@ -73,29 +76,30 @@ export default function CreatePositionModal({ isOpen, onClose, wallet, onSuccess
 
         setSubmitting(true)
         try {
-            const txn = await setPosition(APP_ID, entry, lower, upper, capital, wallet.address)
-
-            // Sign and submit via Pera wallet's built-in method
-            const algosdk = (await import('algosdk')).default
-            const client = new algosdk.Algodv2('', import.meta.env.VITE_ALGO_NODE || 'https://testnet-api.algonode.cloud', '')
-            const txId = await wallet.signAndSubmit(txn, client)
-
-            // Save to Supabase for persistence
             const openTimestamp = Math.floor(Date.now() / 1000)
-            try {
-                await savePosition(wallet.address, {
-                    entryPrice: entry,
-                    lowerBound: lower,
-                    upperBound: upper,
-                    capitalUsdc: capital,
-                    openTimestamp,
-                    appId: APP_ID,
-                })
-            } catch (sbErr) {
-                console.warn('Supabase save failed (position is on-chain):', sbErr)
-            }
+            const isCreator = CREATOR_ADDRESS
+                ? wallet.address === CREATOR_ADDRESS
+                : false  // if CREATOR_ADDRESS not set, treat all as pool participants
 
-            // Pass complete data so usePosition.forceUpdate can show it immediately
+            let txId = 'supabase-only'
+
+            if (isCreator) {
+                // ── Creator: call set_position on-chain ─────────────────
+                const txn = await setPosition(APP_ID, entry, lower, upper, capital, wallet.address)
+                const algosdk = (await import('algosdk')).default
+                const client = new algosdk.Algodv2('', import.meta.env.VITE_ALGO_NODE || 'https://testnet-api.algonode.cloud', '')
+                txId = await wallet.signAndSubmit(txn, client)
+            }
+            // All wallets (creator + participants): save to Supabase ────
+            await savePosition(wallet.address, {
+                entryPrice: entry,
+                lowerBound: lower,
+                upperBound: upper,
+                capitalUsdc: capital,
+                openTimestamp,
+                appId: APP_ID,
+            })
+
             onSuccess?.({
                 txId,
                 entry,
@@ -103,7 +107,6 @@ export default function CreatePositionModal({ isOpen, onClose, wallet, onSuccess
                 upper,
                 capital,
                 openTimestamp,
-                // Full position shape for forceUpdate
                 positionData: {
                     entryPrice: entry,
                     lowerBound: lower,

@@ -1,11 +1,14 @@
 /**
- * DepositModal — allows users to deposit additional funds into the vault.
+ * DepositModal — allows any user to deposit additional funds into the vault.
  * Calls deposit() on the AEGIS smart contract via Pera wallet.
+ * Contract deposit() is PUBLIC — no creator restriction.
  */
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { updatePosition } from '../services/supabaseService'
 
-const APP_ID = parseInt(import.meta.env.VITE_APP_ID || '755777633')
+// Always use the latest deployed contract — 755790984 has public deposit()
+const APP_ID = parseInt(import.meta.env.VITE_APP_ID || '755790984')
 
 export default function DepositModal({ isOpen, onClose, wallet, position, onSuccess }) {
     const [algoAmount, setAlgoAmount] = useState('')
@@ -43,23 +46,31 @@ export default function DepositModal({ isOpen, onClose, wallet, position, onSucc
                 }],
             })
 
-            const atc = new algosdk.AtomicTransactionComposer()
-            atc.addMethodCall({
-                appID: APP_ID,
-                method: contract.getMethodByName('deposit'),
-                methodArgs: [
-                    Math.round(algo * 1e6),  // microAlgo
-                    Math.round(usdc * 1e6),  // micro-USDC
-                ],
-                sender: wallet.address,
+            // Build the ABI encoded app call transaction directly
+            const method = contract.getMethodByName('deposit')
+            const methodSelector = method.getSelector()
+            const algoArg = algosdk.encodeUint64(Math.round(algo * 1e6))
+            const usdcArg = algosdk.encodeUint64(Math.round(usdc * 1e6))
+
+            const appCallTxn = algosdk.makeApplicationCallTxnFromObject({
+                from: wallet.address,
+                appIndex: APP_ID,
+                onComplete: algosdk.OnApplicationComplete.NoOpOC,
+                appArgs: [methodSelector, algoArg, usdcArg],
                 suggestedParams,
-                signer: algosdk.makeEmptyTransactionSigner(),
             })
 
-            const txGroup = atc.buildGroup().map(t => t.txn)
-            const txn = txGroup[0]
+            // Sign and broadcast via Pera wallet
+            const txId = await wallet.signAndSubmit(appCallTxn, client)
 
-            const txId = await wallet.signAndSubmit(txn, client)
+            // Update Supabase record if position has an ID
+            if (position?._positionId) {
+                await updatePosition(position._positionId, {
+                    deposited_algo: (position.depositedAlgo || 0) + algo,
+                    deposited_usdc: (position.depositedUsdc || 0) + usdc,
+                }).catch(() => { })
+            }
+
             onSuccess?.({ txId, algo, usdc })
             onClose()
         } catch (e) {
