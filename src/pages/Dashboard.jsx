@@ -92,7 +92,7 @@ function WalletEmptyState({ wallet }) {
 export default function Dashboard({ wallet }) {
     const navigate = useNavigate()
     const { currentPrice, priceHistory, isLoading: priceLoading, lastFetched } = useLivePrice()
-    const position = usePosition()
+    const position = usePosition(wallet?.address)  // wallet-scoped: each user sees their own data
     const stats = useDerivedStats({ position, currentPrice })
     const addToast = useSafeToast()
 

@@ -148,7 +148,7 @@ function PositionCard({ pos, currentPrice, index, onAddLiquidity, onRemoveLiquid
 export default function Positions({ wallet }) {
     const navigate = useNavigate()
     const { currentPrice } = useLivePrice()
-    const position = usePosition()
+    const position = usePosition(wallet?.address)  // wallet-scoped
 
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [showAddModal, setShowAddModal] = useState(false)
