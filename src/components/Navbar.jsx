@@ -31,10 +31,10 @@ export default function Navbar({ wallet, isDashboard }) {
                 {isDashboard ? (
                     <>
                         <NavLink href="/dashboard" active={location.pathname === '/dashboard'}>Dashboard</NavLink>
-                        <NavLink href="/positions" active={location.pathname === '/positions'}>Positions</NavLink>
+                        <NavLink href="/swap" active={location.pathname === '/swap' && !location.search.includes('pool')}>Swap</NavLink>
+                        <NavLink href="/swap?tab=pool" active={location.pathname === '/swap' && location.search.includes('pool')}>Pool</NavLink>
                         <NavLink href="/analytics" active={location.pathname === '/analytics'}>Analytics</NavLink>
                         <NavLink href="/transactions" active={location.pathname === '/transactions'}>History</NavLink>
-                        <NavLink href="/swap" active={location.pathname === '/swap'}>Swap</NavLink>
                     </>
                 ) : (
                     <NavLink href="/dashboard" active={false}>Dashboard →</NavLink>

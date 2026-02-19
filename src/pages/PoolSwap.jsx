@@ -7,17 +7,20 @@
  *   3. DEPOSITORS: Shows all participants and their share of the pool
  *   4. FEE TRACKER: Running tally of fees earned from swaps this session
  */
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useLocation } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import JoinPoolModal from '../components/JoinPoolModal'
 import PoolDepositorsPanel from '../components/PoolDepositorsPanel'
 import { useLivePrice } from '../hooks/useLivePrice'
 
 const APP_ID = parseInt(import.meta.env.VITE_APP_ID || '755790672')
+const USDC_ASSET_ID = 10458941 // Testnet USDC
 
 export default function PoolSwap({ wallet }) {
     const { currentPrice, isLoading: priceLoading } = useLivePrice()
+    const location = useLocation()
     const [tab, setTab] = useState('swap') // 'swap' | 'pool'
     const [direction, setDirection] = useState('ALGO_TO_USDC')
     const [amount, setAmount] = useState('')
@@ -27,6 +30,15 @@ export default function PoolSwap({ wallet }) {
     const [success, setSuccess] = useState(null)
     const [showJoinModal, setShowJoinModal] = useState(false)
     const [depositorsRefresh, setDepositorsRefresh] = useState(0)
+
+    // Parse URL query for tab
+    useEffect(() => {
+        const params = new URLSearchParams(location.search)
+        const t = params.get('tab')
+        if (t === 'pool' || t === 'swap') {
+            setTab(t)
+        }
+    }, [location.search])
 
     // Cumulative fee tracking
     const totalFeesEarned = txHistory.reduce((sum, tx) => sum + tx.fee, 0)
@@ -54,6 +66,7 @@ export default function PoolSwap({ wallet }) {
 
             let txn
             if (direction === 'ALGO_TO_USDC') {
+                // ALGO Payment
                 txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
                     from: wallet.address, to: POOL_ADDRESS,
                     amount: Math.round(amt * 1e6),
@@ -61,10 +74,13 @@ export default function PoolSwap({ wallet }) {
                     note: new TextEncoder().encode(`AEGIS-SWAP:ALGO>${(amt * currentPrice).toFixed(2)}USDC`),
                 })
             } else {
+                // USDC Asset Transfer
                 const algoEquiv = amt / currentPrice
-                txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-                    from: wallet.address, to: POOL_ADDRESS,
-                    amount: Math.round(algoEquiv * 1e6),
+                txn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+                    from: wallet.address,
+                    to: POOL_ADDRESS,
+                    assetIndex: USDC_ASSET_ID,
+                    amount: Math.round(amt * 1e6), // USDC has 6 decimals
                     suggestedParams,
                     note: new TextEncoder().encode(`AEGIS-SWAP:${amt}USDC>ALGO`),
                 })

@@ -7,7 +7,7 @@ import React, { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Navbar from '../components/Navbar'
-import CreatePositionModal from '../components/CreatePositionModal'
+// import CreatePositionModal from '../components/CreatePositionModal' // Deprecated for single global pool
 import AddLiquidityModal from '../components/AddLiquidityModal'
 import RemoveLiquidityModal from '../components/RemoveLiquidityModal'
 import { useLivePrice } from '../hooks/useLivePrice'
@@ -249,8 +249,8 @@ export default function Positions({ wallet }) {
                             {position.isLoading ? 'Loading…' : `${allPositions.length} position${allPositions.length !== 1 ? 's' : ''} · ${allPositions.filter(p => p.status === 'active' || p.status === 'out_of_range').length} active · Algorand Testnet`}
                         </p>
                     </div>
-                    <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
-                        + New Position
+                    <button className="btn-primary" onClick={() => navigate('/swap?tab=pool')}>
+                        + Join Global Pool
                     </button>
                 </div>
 
@@ -316,12 +316,12 @@ export default function Positions({ wallet }) {
                         className="card" style={{ padding: 48, textAlign: 'center' }}
                     >
                         <div style={{ fontSize: 36, marginBottom: 12, opacity: 0.15 }}>◇</div>
-                        <h3 style={{ fontSize: 16, marginBottom: 8 }}>No Positions Yet</h3>
+                        <h3 style={{ fontSize: 16, marginBottom: 8 }}>No Active Positions</h3>
                         <p style={{ fontSize: 13, color: 'var(--text-muted)', maxWidth: 400, margin: '0 auto', marginBottom: 16 }}>
-                            Create your first LP position to start earning fees with AEGIS autonomous management.
+                            Join the global AEGIS liquidity pool to start earning fees with autonomous management.
                         </p>
-                        <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
-                            + Create First Position
+                        <button className="btn-primary" onClick={() => navigate('/swap?tab=pool')}>
+                            + Join Global Pool
                         </button>
                     </motion.div>
                 )}

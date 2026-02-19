@@ -21,6 +21,28 @@ export async function fetchWalletBalance(address) {
 }
 
 /**
+ * Fetches asset balance for a given wallet address.
+ * @param {string} address - Algorand wallet address
+ * @param {number} assetId - Asset ID (e.g. USDC)
+ * @returns {Promise<number>} Balance in standard units
+ */
+export async function fetchAssetBalance(address, assetId) {
+    try {
+        const info = await indexerClient.lookupAccountAssets(address).do()
+        const assets = info['assets'] ?? []
+        const asset = assets.find(a => a['asset-id'] === assetId)
+        if (!asset) return 0
+
+        // We assume 6 decimals for typical assets like USDC, but should fetch params if needed.
+        // For testnet USDC (10458941), decimals is 6.
+        return asset.amount / 1e6
+    } catch (err) {
+        console.warn(`[indexerService] Asset ${assetId} fetch failed:`, err.message)
+        return 0
+    }
+}
+
+/**
  * Fetches all transactions for a given App ID.
  * @param {number|string} appId - Algorand application ID
  * @returns {Promise<Array>} List of transactions
