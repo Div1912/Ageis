@@ -54,6 +54,23 @@ function useSecondsAgo(ts) {
 }
 
 // Full-page empty state when wallet not connected
+// Check for missing env vars (common cause of persistence failure)
+function EnvVarAlert() {
+    const missing = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY
+    if (!missing) return null
+    return (
+        <div style={{
+            background: '#FEF2F2', border: '1px solid #F87171', color: '#B91C1C',
+            padding: '12px 16px', borderRadius: 8, marginBottom: 20, fontSize: 13,
+            maxWidth: 600, margin: '20px auto 0', textAlign: 'left'
+        }}>
+            <strong>⚠️ Configuration Error:</strong> Supabase keys are missing.<br />
+            Positions will not be saved across devices.<br />
+            Please add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> to your Vercel Project Settings.
+        </div>
+    )
+}
+
 function WalletEmptyState({ wallet }) {
     const navigate = useNavigate()
     return (
@@ -61,6 +78,7 @@ function WalletEmptyState({ wallet }) {
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             minHeight: 'calc(100vh - 112px)', textAlign: 'center', padding: 40,
         }}>
+            <EnvVarAlert />
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
                 {/* Illustration */}
                 <svg width="120" height="120" viewBox="0 0 120 120" fill="none" style={{ marginBottom: 28, opacity: 0.5 }}>
@@ -174,6 +192,7 @@ export default function Dashboard({ wallet }) {
     return (
         <div className="page-base">
             <Navbar wallet={wallet} isDashboard={true} />
+            <EnvVarAlert />
 
             {/* ── Out of range alert ── */}
             <OutOfRangeAlert
